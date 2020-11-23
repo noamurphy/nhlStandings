@@ -1,6 +1,5 @@
 import java.io.File;
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Scanner;
 
@@ -21,19 +20,34 @@ public class HockeyDriver {
             System.out.println("Example: -f nhl-game-data" + File.separator + "games-nov.csv (to load new game results and display resulting standings");
             System.exit(0);
         }
-        if (args[0].equals("-t")){
-            Scanner argScan = new Scanner(args[1]);
-            Team team;
-            if(argScan.hasNextInt()) {
-                 team = new Team(argScan.nextInt());
-                 System.out.println(team.getStanding());
-            }
-        }
-        //if (args[1].equals("-f")){
-
-        //}
-        else{
-            System.out.println("First argument must be -t or -f");
+        //Identify first arg
+        switch(args[0]){
+            case "-t":
+                //Scan for team ID
+                Scanner tArgScan = new Scanner(args[1]);
+                Team team;
+                if(tArgScan.hasNextInt()) {
+                    team = new Team(tArgScan.nextInt());
+                    System.out.println(team.getStanding());
+                }
+                else {
+                    System.out.println("Invalid argument");
+                }
+                break;
+            case "-f":
+                //Process all filePath args
+                for(int i = 1; i < args.length; i++){
+                    Scanner fArgScan = new Scanner(args[i]);
+                    String filePath = fArgScan.next();
+                    if(Files.exists(Paths.get(filePath))){
+                        League.updateStandings(filePath);
+                    }
+                }
+                League.printStandings();
+                break;
+            default:
+                System.out.println("First argument must be -t or -f");
+                break;
         }
     }
 }
