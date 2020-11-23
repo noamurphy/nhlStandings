@@ -51,6 +51,11 @@ public class Team {
         return (name + " " + standing.toString());
     }
 
+    /**
+     * creates an updated standing object and calls modify standing to update the binary standing file
+     * @param win set as true to add a win
+     * @param oT set as true to make a loss an OT loss
+     */
     public void updateStanding(boolean win, boolean oT){
         Standing standing = new Standing();
         standing.modifyStanding(id, win, oT);
@@ -80,15 +85,18 @@ public class Team {
                     throw new IllegalArgumentException("Team ID is not valid");
                 }
 
+                //Calculate the size of a standing in bytes
                 int idBytes = Integer.BYTES;
                 int winsBytes = Long.BYTES;
                 int lossesBytes = Long.BYTES;
                 int lossesOTBytes = Long.BYTES;
 
+                //Move pointer to id specific standing position
                 final int STANDING_BYTES = idBytes + winsBytes + lossesBytes + lossesOTBytes;
                 long position = STANDING_BYTES*(id-1);
                 raf.seek(position);
 
+                //Set Standing variables to values on standings file
                 if(raf.readInt() == id){
                     wins = raf.readLong();
                     losses = raf.readLong();
@@ -106,11 +114,14 @@ public class Team {
         /**
          * Modifies the standings of a team in a binary standings file
          * @param id id of the team
-         * @param win whether to add a win
-         * @param oT whether the game was a loss in OT
+         * @param win true adds a win
+         * @param oT true makes a loss an OT loss
          */
         public void modifyStanding(int id, boolean win, boolean oT) {
+            //Get current standing data
             readStanding(id);
+
+            //Update standing data
             if (win) {
                 this.wins++;
             }
@@ -121,6 +132,8 @@ public class Team {
                     this.losses++;
                 }
             }
+
+            //Write modified standing data back to standings file (See readStanding method for breakdown)
             try (RandomAccessFile raf = new RandomAccessFile("nhl-game-data\\standings.bin", "rw")) {
                 if(id < 1 || id > League.getNumTeams()){
                     throw new IllegalArgumentException("Team ID is not valid");
@@ -149,11 +162,19 @@ public class Team {
             }
         }
 
+        /**
+         * Calculates a teams current points from their wins and losses in OT
+         * @return the points of a teams current standing
+         */
         public Long getPoints(){
             Long points = (wins*League.getWinPoints()) + (lossesOT*League.getOtLossPoints());
             return points;
         }
 
+        /**
+         * Converts a standings data to String
+         * @return the standing data
+         */
         public String toString(){
             return (wins + " " + losses + " " +
                     lossesOT + " " + getPoints());
